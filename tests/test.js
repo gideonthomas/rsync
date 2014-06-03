@@ -1,104 +1,97 @@
 var Filer = require('filer'),
     rsync = require('../rsync'),
-    expect = require('chai').expect;
+    expect = require('chai').expect,
+    fs, fs2,
+    provider;
 
-afterEach(function(fs))
+
 
 describe('Rsync', function() {
-  
-  it('should fail generating sourceList if filesystem is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
+  beforeEach(function() {
+    provider = new Filer.FileSystem.providers.Memory("B");
+    fs = new Filer.FileSystem({provider: provider, flags: ['FORMAT']});
+    fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory("A"), flags: ['FORMAT']});
+  });
 
+  afterEach(function() {
+    fs = null;
+    fs2 = null;
+    provider = null;
+  });
+
+  it('should fail generating sourceList if filesystem is null', function(done) {
     rsync.sourceList(null, '/', function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail generating checksums if filesystem is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.checksums(null, '/', [], function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail generating diffs if filesystem is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.diff(null, '/', [],  function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail patching if filesystem is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.patch(null, '/', [], function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
 
   it('should fail generating sourceList if source path is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.sourceList(fs, null, function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail generating checksums if source path is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.checksums(fs, null, [], function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail generating diffs if source path is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.diff(fs, null, [], function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
   
   it('should fail patching if source path is null', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     rsync.patch(fs, null, [], function(err) {  
-        expect(err).to.exist;
-        expect(err.code).to.equal('EINVAL');
-        done();
+      expect(err).to.exist;
+      expect(err.code).to.equal('EINVAL');
+      done();
     });
   });
 
   it('should fail if source path doesn\'t exist', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
-      rsync.sourceList(fs, '/1.txt', function(err) {
-          expect(err).to.exist;
-          expect(err.code).to.equal('ENOENT');
-          done();
-      });
+    rsync.sourceList(fs, '/1.txt', function(err) {
+      expect(err).to.exist;
+      expect(err.code).to.equal('ENOENT');
+      done();
+    });
   });
 
   it('should succeed if the source file is different in content but not length from the destination file. (Destination edited)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/1.txt','This is my file. It does not have any typos.','utf8',function(err) { 
@@ -129,31 +122,21 @@ describe('Rsync', function() {
   });
 
   it('should succeed if the source file is longer than the destination file. (Destination appended)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
-      console.log(err);
       expect(err).to.not.exist;
       fs.writeFile('/1.txt','This is my file. It is longer than the destination file.', 'utf8', function(err) { 
-        console.log(err);
         expect(err).to.not.exist;
         fs.writeFile('/test/1.txt','This is my file.','utf8',function(err) {
-          console.log(err);
           expect(err).to.not.exist;
           rsync.sourceList(fs, '/1.txt', {recursive: true, size: 5 }, function(err, data) {
-            console.log(err);
             expect(err).to.not.exist;
             rsync.checksums(fs, '/test', data, {recursive: true, size: 5 }, function(err, data) {
-              console.log(err);
               expect(err).to.not.exist;
               rsync.diff(fs, '/1.txt', data, {recursive: true, size: 5 }, function(err, data) {
-                console.log(err);
                 expect(err).to.not.exist;
                 rsync.patch(fs, '/test', data, {recursive: true, size: 5 }, function(err) {
-                  console.log(err);
                   expect(err).to.not.exist;
                   fs.readFile('/test/1.txt', 'utf8', function(err, data){
-                    console.log(err);
                     expect(err).to.not.exist;
                     expect(data).to.exist;
                     expect(data).to.equal('This is my file. It is longer than the destination file.');
@@ -169,8 +152,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed if the source file shorter than the destination file. (Destination truncated)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/1.txt','This is my file.','utf8',function(err) { 
@@ -201,8 +182,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed if the source file does not exist in the destination folder (Destination file created)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/1.txt','This is my file. It does not exist in the destination folder.', 'utf8', function(err) { 
@@ -230,8 +209,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed if no options are provided', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/1.txt','This is my file. It does not exist in the destination folder.', 'utf8', function(err) { 
@@ -259,7 +236,6 @@ describe('Rsync', function() {
   });
 
   it('should do nothing if the source file and destination file have the same mtime and size with \'checksum = false\' flag (Default)', function(done){
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
     var date = Date.parse('1 Oct 2000 15:33:22'); 
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
@@ -297,8 +273,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed if the source file and destination file have the same mtime and size with \'checksum = true\' flag', function(done){
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/1.txt', 'This is a file.', 'utf8', function(err) {
@@ -329,7 +303,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed and update mtime with \'time = true\' flag', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
     var mtime;
 
     fs.mkdir('/test', function(err) {
@@ -369,8 +342,6 @@ describe('Rsync', function() {
   });
 
  it('should copy a symlink as a file with \'links = false\' flag (Default)', function(done){
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err){
       expect(err).to.not.exist;
       fs.writeFile('/1.txt', 'This is a file', function(err){
@@ -408,9 +379,7 @@ describe('Rsync', function() {
     });
   });
 
-  it('should copy a symlink as a file with \'links = true\' flag', function(done){
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-   
+  it('should copy a symlink as a file with \'links = true\' flag', function(done) {   
     fs.mkdir('/test', function(err){
       expect(err).to.not.exist;
       fs.writeFile('/apple.txt', 'This is a file', function(err){
@@ -445,8 +414,7 @@ describe('Rsync', function() {
     });
   });
 
-  it('should copy a symlink as a file with \'links = false\' flag and update time with \'time: true\' flag', function(done){
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
+  it('should copy a symlink as a file with \'links = false\' flag and update time with \'time: true\' flag', function(done) {
     var mtime;
 
     fs.mkdir('/test', function(err){
@@ -493,8 +461,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed if the destination folder does not exist (Destination directory created)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.writeFile('/1.txt','This is my file. It does not exist in the destination folder.', 'utf8', function(err) { 
       expect(err).to.not.exist;
       rsync.sourceList(fs, '/1.txt', {recursive: true, size: 5}, function(err, data) {
@@ -519,8 +485,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed syncing a directory if the destination directory is empty', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.mkdir('/test2', function(err) {
@@ -559,8 +523,6 @@ describe('Rsync', function() {
   });
 
   it('should succeed syncing a directory if the destination directory doesn\'t exist', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/test/1.txt','This is my 1st file. It does not have any typos.', 'utf8', function(err) { 
@@ -596,57 +558,60 @@ describe('Rsync', function() {
   });
 
   it('should succeed syncing a directory recursively, skipping same-size and time files (recursive: true)', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
     var date = Date.parse('1 Oct 2000 15:33:22'); 
-
-    fs.mkdir('/test/sync', function(err){
+    
+    fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
-      fs.mkdir('/test2/sync', function(err){
+      fs.mkdir('/test/sync', function(err){
         expect(err).to.not.exist;
-        fs.writeFile('/test/1.txt','This is my 1st file.', 'utf8', function(err) { 
+        fs.mkdir('/test2', function(err) {
           expect(err).to.not.exist;
-          fs.writeFile('/test/sync/2.txt','This is my 2nd file.', 'utf8', function(err) { 
+          fs.mkdir('/test2/sync', function(err){
             expect(err).to.not.exist;
-            fs.writeFile('/test/sync/3.txt','This is my 3rd file.', 'utf8', function(err) { 
+            fs.writeFile('/test/1.txt','This is my 1st file.', 'utf8', function(err) { 
               expect(err).to.not.exist;
-              fs.writeFile('/test2/sync/3.txt','This shouldn\'t sync.', 'utf8', function(err) { 
+              fs.writeFile('/test/sync/2.txt','This is my 2nd file.', 'utf8', function(err) { 
                 expect(err).to.not.exist;
-                fs.utimes('/test/sync/3.txt', date, date, function(err) {
+                fs.writeFile('/test/sync/3.txt','This is my 3rd file.', 'utf8', function(err) { 
                   expect(err).to.not.exist;
-                  fs.utimes('/test2/sync/3.txt', date, date, function(err) {
+                  fs.writeFile('/test2/sync/3.txt','This shouldn\'t sync.', 'utf8', function(err) { 
                     expect(err).to.not.exist;
-                    rsync.sourceList(fs, '/test', {recursive: true, size: 5}, function(err, data) {
+                    fs.utimes('/test/sync/3.txt', date, date, function(err) {
                       expect(err).to.not.exist;
-                      rsync.checksums(fs, '/test2', data, {recursive: true, size: 5}, function(err, data) {
+                      fs.utimes('/test2/sync/3.txt', date, date, function(err) {
                         expect(err).to.not.exist;
-                        rsync.diff(fs, '/test', data, {recursive: true, size: 5}, function(err, data) {
+                        rsync.sourceList(fs, '/test', {recursive: true, size: 5}, function(err, data) {
                           expect(err).to.not.exist;
-                          rsync.patch(fs, '/test2', data, {recursive: true, size: 5}, function(err) {
+                          rsync.checksums(fs, '/test2', data, {recursive: true, size: 5}, function(err, data) {
                             expect(err).to.not.exist;
-                            fs.readFile('/test2/1.txt', 'utf8', function(err, data){
+                            rsync.diff(fs, '/test', data, {recursive: true, size: 5}, function(err, data) {
                               expect(err).to.not.exist;
-                              expect(data).to.exist;
-                              expect(data).to.equal('This is my 1st file.');
-                              fs.readFile('/test2/sync/2.txt', 'utf8', function(err, data){
+                              rsync.patch(fs, '/test2', data, {recursive: true, size: 5}, function(err) {
                                 expect(err).to.not.exist;
-                                expect(data).to.exist;
-                                expect(data).to.equal('This is my 2nd file.');
-                                fs.readFile('/test2/sync/3.txt', 'utf8', function(err, data){
+                                fs.readFile('/test2/1.txt', 'utf8', function(err, data){
                                   expect(err).to.not.exist;
                                   expect(data).to.exist;
-                                  expect(data).to.equal('This shouldn\'t sync.')
-                                  done();
-                                });
+                                  expect(data).to.equal('This is my 1st file.');
+                                  fs.readFile('/test2/sync/2.txt', 'utf8', function(err, data){
+                                    expect(err).to.not.exist;
+                                    expect(data).to.exist;
+                                    expect(data).to.equal('This is my 2nd file.');
+                                    fs.readFile('/test2/sync/3.txt', 'utf8', function(err, data){
+                                      expect(err).to.not.exist;
+                                      expect(data).to.exist;
+                                      expect(data).to.equal('This shouldn\'t sync.')
+                                      done();
+                                    });
+                                  });
+                                }); 
                               });
-                            }); 
+                            });
                           });
                         });
-                      });
+                      }); 
                     });
-
-                  }); 
+                  });
                 });
-
               });
             });
           });
@@ -656,9 +621,6 @@ describe('Rsync', function() {
   });
 
   it('qweefw', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-    var fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/projects', function(err){
       expect(err).to.not.exist;
       fs.mkdir('/projects/proj_1', function(err){
@@ -714,9 +676,6 @@ describe('Rsync', function() {
   });
 
   it('##should succeed syncing a directory if the destination directory doesn\'t exist', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-    var fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.mkdir('/test/dir', function(err) {
@@ -750,8 +709,6 @@ describe('Rsync', function() {
   });
 
   it('##should succeed syncing a directory if the destination directories do not exist', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.mkdir('/test/dir1', function(err) { 
@@ -803,9 +760,6 @@ describe('Rsync', function() {
   });
 
   it('##should succeed syncing a file that has been renamed', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()}),
-        fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.writeFile('/test/file1.txt', 'This is the file I created', 'utf8', function(err) {
@@ -863,9 +817,6 @@ describe('Rsync', function() {
   });
 
   it('##should succeed syncing a directory that has been renamed', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()}),
-        fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
-    
     console.log('-----------------');
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
@@ -951,8 +902,6 @@ describe('Rsync', function() {
   });
 
   it('##should not sync a deleted file', function(done) {
-    var fs = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()}),
-        fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
     console.log('-----------------');
 
     fs.mkdir('/test', function(err) {
