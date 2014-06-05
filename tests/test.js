@@ -98,13 +98,13 @@ describe('Rsync', function() {
         expect(err).to.not.exist;
         fs.writeFile('/test/1.txt','This iz mi fiel. It doez not have any topos,', 'utf8', function(err) {
           expect(err).to.not.exist;
-          rsync.sourceList(fs, '/1.txt', {recursive: true, size: 5 }, function(err, data) {
+          rsync.sourceList(fs, '/1.txt', {size: 5 }, function(err, data) {
             expect(err).to.not.exist;
-            rsync.checksums(fs, '/test', data, {recursive: true, size: 5 }, function(err, data) {
+            rsync.checksums(fs, '/test', data, {size: 5 }, function(err, data) {
               expect(err).to.not.exist;
-              rsync.diff(fs, '/1.txt', data, {recursive: true, size: 5 }, function(err, data) {
+              rsync.diff(fs, '/1.txt', data, {size: 5 }, function(err, data) {
                 expect(err).to.not.exist;
-                rsync.patch(fs, '/test', data, {recursive: true, size: 5 }, function(err) {
+                rsync.patch(fs, '/test', data, {size: 5 }, function(err) {
                   expect(err).to.not.exist;
                   fs.readFile('/test/1.txt', 'utf8', function(err, data) {
                     expect(err).to.not.exist;
@@ -279,13 +279,13 @@ describe('Rsync', function() {
         expect(err).to.not.exist;
         fs.writeFile('/test/1.txt', 'Different file.', 'utf8', function(err) {
           expect(err).to.not.exist;
-          rsync.sourceList(fs, '/1.txt', {recursive: true, size: 5, checksum: true}, function(err, data) {
+          rsync.sourceList(fs, '/1.txt', {size: 5, checksum: true}, function(err, data) {
             expect(err).to.not.exist;
-            rsync.checksums(fs, '/test', data, {recursive: true, size: 5, checksum: true}, function(err, data) {
+            rsync.checksums(fs, '/test', data, {size: 5, checksum: true}, function(err, data) {
               expect(err).to.not.exist;
-              rsync.diff(fs, '/1.txt', data, {recursive: true, size: 5, checksum: true}, function(err, data) {
+              rsync.diff(fs, '/1.txt', data, {size: 5, checksum: true}, function(err, data) {
                 expect(err).to.not.exist;
-                rsync.patch(fs, '/test', data, {recursive: true, size: 5, checksum: true}, function(err) {
+                rsync.patch(fs, '/test', data, {size: 5, checksum: true}, function(err) {
                   expect(err).to.not.exist;
                   fs.readFile('/test/1.txt', 'utf8', function(err, data) {
                     expect(err).to.not.exist;
@@ -557,7 +557,7 @@ describe('Rsync', function() {
     });
   });
 
-  it('should succeed syncing a directory recursively, skipping same-size and time files (recursive: true)', function(done) {
+  it('should succeed syncing a directory recursively, skipping same-size and time files (recursive: true, checksum: false)', function(done) {
     var date = Date.parse('1 Oct 2000 15:33:22'); 
     
     fs.mkdir('/test', function(err) {
@@ -580,13 +580,13 @@ describe('Rsync', function() {
                       expect(err).to.not.exist;
                       fs.utimes('/test2/sync/3.txt', date, date, function(err) {
                         expect(err).to.not.exist;
-                        rsync.sourceList(fs, '/test', {recursive: true, size: 5}, function(err, data) {
+                        rsync.sourceList(fs, '/test', {recursive: true, checksum: false, size: 5}, function(err, data) {
                           expect(err).to.not.exist;
-                          rsync.checksums(fs, '/test2', data, {recursive: true, size: 5}, function(err, data) {
+                          rsync.checksums(fs, '/test2', data, {recursive: true, checksum: false, size: 5}, function(err, data) {
                             expect(err).to.not.exist;
-                            rsync.diff(fs, '/test', data, {recursive: true, size: 5}, function(err, data) {
+                            rsync.diff(fs, '/test', data, {recursive: true, checksum: false, size: 5}, function(err, data) {
                               expect(err).to.not.exist;
-                              rsync.patch(fs, '/test2', data, {recursive: true, size: 5}, function(err) {
+                              rsync.patch(fs, '/test2', data, {recursive: true, checksum: false, size: 5}, function(err) {
                                 expect(err).to.not.exist;
                                 fs.readFile('/test2/1.txt', 'utf8', function(err, data){
                                   expect(err).to.not.exist;
@@ -620,7 +620,7 @@ describe('Rsync', function() {
     });
   });
 
-  it('qweefw', function(done) {
+  it('Should sync empty directories', function(done) {
     fs.mkdir('/projects', function(err){
       expect(err).to.not.exist;
       fs.mkdir('/projects/proj_1', function(err){
@@ -779,10 +779,8 @@ describe('Rsync', function() {
                   fs.rename('/test/file1.txt', '/test/myfile.txt', function(err) {
                     expect(err).to.not.exist;
                     fs.readFile('/test/file1.txt', 'utf8', function(err, data) {
-                      console.log(data);
                       expect(err).to.exist;
                       expect(err.code).to.equal('ENOENT');
-                      console.log('Rsync 1 complete');
                       rsync.sourceList(fs, '/test', {recursive: true, size: 5}, function(err, data) {
                         expect(err).to.not.exist;
                         rsync.checksums(fs2, '/', data, {recursive: true, size: 5}, function(err, data) {
@@ -817,7 +815,6 @@ describe('Rsync', function() {
   });
 
   it('##should succeed syncing a directory that has been renamed', function(done) {
-    console.log('-----------------');
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
       fs.mkdir('/test/olddir', function(err) {
@@ -862,7 +859,7 @@ describe('Rsync', function() {
                                         expect(err).to.not.exist;
                                         expect(stats).to.exist;
                                         expect(stats.type).to.equal('DIRECTORY');
-                                        fs2.readFile('/newdir/myfile.txt', 'utf8', function(err, data) {
+                                        fs2.readFile('/newdir/file1.txt', 'utf8', function(err, data) {
                                           expect(err).to.not.exist;
                                           expect(data).to.exist;
                                           expect(data).to.equal('This is the file I created');
@@ -902,7 +899,6 @@ describe('Rsync', function() {
   });
 
   it('##should not sync a deleted file', function(done) {
-    console.log('-----------------');
 
     fs.mkdir('/test', function(err) {
       expect(err).to.not.exist;
